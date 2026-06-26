@@ -1,5 +1,7 @@
 # PDF注釈エディタ
 
+**公開URL: https://lionemikosan-sketch.github.io/pdf-editor/**
+
 既存のPDFに **テキスト・ペン・ハイライト・図形・線/矢印・画像** を重ねて書き込み、注釈を焼き込んだPDFとして保存できる、ブラウザ完結のエディタです。
 
 ファイルはすべて**端末内（ブラウザ内）だけで処理**され、どこのサーバーにもアップロードされません。完全オフラインで動作します。
@@ -53,6 +55,16 @@ npm run typecheck  # 型チェック
 ```
 
 `public/sample.pdf` は動作確認用のサンプルです（トップ画面の「サンプルPDFで試す」から開けます）。
+
+### デプロイ
+
+GitHub Pages（専用リポジトリ `lionemikosan-sketch/pdf-editor` の `gh-pages` ブランチ）に配信します。
+
+```bash
+npm run deploy   # build → dist を gh-pages ブランチへ force-push
+```
+
+本番は `vite.config.ts` の `base` が `/pdf-editor/` になります。
 
 ## プライバシー
 
