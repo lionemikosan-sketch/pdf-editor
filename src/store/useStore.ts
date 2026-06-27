@@ -58,7 +58,7 @@ const defaultSettings: ToolSettings = {
   fillEnabled: false,
   fillColor: '#ffd54a',
   strokeWidth: 3,
-  fontSize: 16,
+  fontSize: 15,
   fontFamily: DEFAULT_FONT,
   highlightColor: '#ffe14d',
 };

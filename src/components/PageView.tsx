@@ -368,25 +368,28 @@ export function PageView({ info }: Props) {
     updateAnnotation(it.id, d as Partial<Annotation>);
   }
 
+  function editText(a: Annotation) {
+    if (a.type !== 'text') return;
+    select(a.id);
+    setEditor({
+      mode: 'edit',
+      id: a.id,
+      x: a.x,
+      y: a.y,
+      w: a.w,
+      fontSize: a.fontSize,
+      fontFamily: a.fontFamily,
+      color: a.color,
+      value: a.text,
+    });
+  }
+
   function onDoubleClick(e: React.MouseEvent) {
     if (tool !== 'select') return;
     const hitId = (e.target as Element).closest('[data-aid]')?.getAttribute('data-aid');
     if (!hitId) return;
     const a = annotations.find((x) => x.id === hitId);
-    if (a && a.type === 'text') {
-      setEditor({
-        mode: 'edit',
-        id: a.id,
-        x: a.x,
-        y: a.y,
-        w: a.w,
-        fontSize: a.fontSize,
-        fontFamily: a.fontFamily,
-        color: a.color,
-        value: a.text,
-      });
-      select(a.id);
-    }
+    if (a) editText(a);
   }
 
   // 描画用：選択中で移動/リサイズ中なら draft を、テキスト編集中ならその注釈を差し替え/除外
@@ -517,6 +520,20 @@ export function PageView({ info }: Props) {
             }
           }}
         />
+      )}
+
+      {/* 選択中テキストの「編集」ボタン（ダブルクリックの代替・分かりやすく確実に編集） */}
+      {tool === 'select' && !editor && selected && selected.type === 'text' && (
+        <button
+          onClick={() => editText(selected)}
+          className="absolute z-10 flex items-center gap-1 rounded-md bg-accent px-2 py-1 text-[11px] font-medium text-white shadow-panel transition hover:bg-accent-soft"
+          style={{
+            left: selected.x * scale,
+            top: Math.max(0, selected.y * scale - 26),
+          }}
+        >
+          ✎ 編集
+        </button>
       )}
     </div>
   );

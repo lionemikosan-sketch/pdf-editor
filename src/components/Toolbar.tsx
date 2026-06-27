@@ -17,6 +17,8 @@ import {
   Download,
   FolderOpen,
   Loader2,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import type { Annotation, Tool } from '@/types';
 import { useStore } from '@/store/useStore';
@@ -106,8 +108,9 @@ export function Toolbar({ onExport, onOpenClick }: Props) {
   }
 
   function onFontChange(value: number) {
-    setSettings({ fontSize: value });
-    if (selected?.type === 'text') applyToSelection({ fontSize: value });
+    const size = Math.max(6, Math.min(200, Math.round(value || 0)));
+    setSettings({ fontSize: size });
+    if (selected?.type === 'text') applyToSelection({ fontSize: size });
   }
 
   function onFontFamilyChange(value: string) {
@@ -267,18 +270,40 @@ export function Toolbar({ onExport, onOpenClick }: Props) {
             </select>
           </label>
 
-          <label className="flex items-center gap-2 rounded-lg bg-ink-850 px-2.5 py-1.5 text-xs text-ink-100/60">
+          <div
+            className="flex items-center gap-1.5 rounded-lg bg-ink-850 px-2 py-1 text-xs text-ink-100/60"
+            title="文字サイズ"
+          >
             字
-            <input
-              type="range"
-              min={8}
-              max={72}
-              value={settings.fontSize}
-              onChange={(e) => onFontChange(Number(e.target.value))}
-              className="w-20 accent-accent"
-            />
-            <span className="w-6 text-right tabular-nums text-ink-100">{settings.fontSize}</span>
-          </label>
+            <div className="flex items-center overflow-hidden rounded-md border border-ink-600 bg-ink-700">
+              <input
+                type="number"
+                min={6}
+                max={200}
+                value={settings.fontSize}
+                onChange={(e) => onFontChange(Number(e.target.value))}
+                className="w-9 bg-transparent py-1 text-center text-ink-100 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
+              <div className="flex flex-col border-l border-ink-600">
+                <button
+                  type="button"
+                  title="大きく"
+                  onClick={() => onFontChange(useStore.getState().settings.fontSize + 1)}
+                  className="flex h-[15px] w-6 items-center justify-center text-ink-100/80 transition hover:bg-ink-600 hover:text-white"
+                >
+                  <ChevronUp size={13} />
+                </button>
+                <button
+                  type="button"
+                  title="小さく"
+                  onClick={() => onFontChange(useStore.getState().settings.fontSize - 1)}
+                  className="flex h-[15px] w-6 items-center justify-center border-t border-ink-600 text-ink-100/80 transition hover:bg-ink-600 hover:text-white"
+                >
+                  <ChevronDown size={13} />
+                </button>
+              </div>
+            </div>
+          </div>
         </>
       )}
 
