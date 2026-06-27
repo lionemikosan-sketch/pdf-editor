@@ -1,10 +1,5 @@
 import type { Annotation } from '@/types';
-
-export const TEXT_FONT_FAMILY =
-  "system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif";
-
-export const LINE_HEIGHT = 1.32;
-const BASELINE = 0.82; // フォント上端からベースラインまでの概算比率
+import { BASELINE, LINE_HEIGHT, wrapText } from '@/lib/text';
 
 function pointsAttr(points: { x: number; y: number }[]): string {
   return points.map((p) => `${p.x},${p.y}`).join(' ');
@@ -122,15 +117,9 @@ export function AnnotationShape({ annotation: a }: { annotation: Annotation }) {
       );
 
     case 'text': {
-      const lines = a.text.split('\n');
+      const lines = wrapText(a.text, a.w, a.fontSize, a.fontFamily);
       return (
-        <text
-          fontFamily={TEXT_FONT_FAMILY}
-          fontSize={a.fontSize}
-          fill={a.color}
-          fillOpacity={a.opacity}
-          style={{ whiteSpace: 'pre' }}
-        >
+        <text fontFamily={a.fontFamily} fontSize={a.fontSize} fill={a.color} fillOpacity={a.opacity}>
           {lines.map((ln, i) => (
             <tspan
               key={i}

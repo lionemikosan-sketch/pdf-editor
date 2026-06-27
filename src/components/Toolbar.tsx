@@ -21,6 +21,7 @@ import {
 import type { Annotation, Tool } from '@/types';
 import { useStore } from '@/store/useStore';
 import { uid } from '@/lib/id';
+import { FONT_OPTIONS } from '@/lib/text';
 
 interface Props {
   onExport: () => void;
@@ -107,6 +108,11 @@ export function Toolbar({ onExport, onOpenClick }: Props) {
   function onFontChange(value: number) {
     setSettings({ fontSize: value });
     if (selected?.type === 'text') applyToSelection({ fontSize: value });
+  }
+
+  function onFontFamilyChange(value: string) {
+    setSettings({ fontFamily: value });
+    if (selected?.type === 'text') applyToSelection({ fontFamily: value });
   }
 
   function onFillToggle(enabled: boolean) {
@@ -243,18 +249,37 @@ export function Toolbar({ onExport, onOpenClick }: Props) {
       )}
 
       {showFont && (
-        <label className="flex items-center gap-2 rounded-lg bg-ink-850 px-2.5 py-1.5 text-xs text-ink-100/60">
-          字
-          <input
-            type="range"
-            min={8}
-            max={72}
-            value={settings.fontSize}
-            onChange={(e) => onFontChange(Number(e.target.value))}
-            className="w-20 accent-accent"
-          />
-          <span className="w-6 text-right tabular-nums text-ink-100">{settings.fontSize}</span>
-        </label>
+        <>
+          <label
+            className="flex items-center gap-1.5 rounded-lg bg-ink-850 px-2 py-1.5 text-xs text-ink-100/60"
+            title="フォント"
+          >
+            <select
+              value={settings.fontFamily}
+              onChange={(e) => onFontFamilyChange(e.target.value)}
+              className="cursor-pointer rounded bg-ink-700 px-1.5 py-1 text-ink-100 outline-none"
+            >
+              {FONT_OPTIONS.map((f) => (
+                <option key={f.label} value={f.value} style={{ fontFamily: f.value }}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex items-center gap-2 rounded-lg bg-ink-850 px-2.5 py-1.5 text-xs text-ink-100/60">
+            字
+            <input
+              type="range"
+              min={8}
+              max={72}
+              value={settings.fontSize}
+              onChange={(e) => onFontChange(Number(e.target.value))}
+              className="w-20 accent-accent"
+            />
+            <span className="w-6 text-right tabular-nums text-ink-100">{settings.fontSize}</span>
+          </label>
+        </>
       )}
 
       <Divider />

@@ -53,13 +53,15 @@ export interface LineAnnotation extends BaseAnnotation {
   strokeWidth: number;
 }
 
-/** テキスト */
+/** テキスト（PowerPoint風のテキストボックス。w の幅で自動折り返し、高さは内容に追従） */
 export interface TextAnnotation extends BaseAnnotation {
   type: 'text';
   x: number;
-  y: number; // 文字ボックスの左上
+  y: number; // ボックスの左上
+  w: number; // ボックス幅（この幅で折り返す）
   text: string;
   fontSize: number;
+  fontFamily: string;
 }
 
 /** 画像・サイン */
@@ -85,6 +87,7 @@ export interface ToolSettings {
   fillColor: string;
   strokeWidth: number;
   fontSize: number;
+  fontFamily: string;
   highlightColor: string;
 }
 

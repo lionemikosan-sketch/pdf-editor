@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Annotation, PageInfo, Tool, ToolSettings } from '@/types';
 import { loadPdf } from '@/lib/pdf';
+import { DEFAULT_FONT } from '@/lib/text';
 
 const MAX_HISTORY = 80;
 
@@ -58,6 +59,7 @@ const defaultSettings: ToolSettings = {
   fillColor: '#ffd54a',
   strokeWidth: 3,
   fontSize: 16,
+  fontFamily: DEFAULT_FONT,
   highlightColor: '#ffe14d',
 };
 

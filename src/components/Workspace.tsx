@@ -3,7 +3,7 @@ import { useStore } from '@/store/useStore';
 import { PageView } from './PageView';
 
 const TOOL_HINTS: Record<string, string> = {
-  text: 'PDF上をクリックすると、その位置にテキストを入力できます',
+  text: 'ドラッグでテキストボックスの範囲を作成 → 中に入力（クリックだけでもOK）',
   pen: 'ドラッグして手書きで描けます',
   highlight: 'ドラッグした部分を蛍光ペンでマークします',
   line: 'ドラッグして直線を引きます',

@@ -13,7 +13,7 @@ interface Props {
 type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se' | 'p1' | 'p2';
 
 interface Interaction {
-  kind: 'create' | 'move' | 'resize';
+  kind: 'create' | 'move' | 'resize' | 'textbox';
   id: string;
   handle?: ResizeHandle;
   start: Point;
@@ -25,13 +25,23 @@ interface EditorState {
   id?: string;
   x: number;
   y: number;
+  w: number;
   fontSize: number;
+  fontFamily: string;
   color: string;
   value: string;
 }
 
+interface BoxDraft {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 const HANDLE_PX = 9;
 const MIN_SIZE = 8;
+const DEFAULT_TEXTBOX_W = 240; // クリックだけ（ドラッグなし）で作るときの既定幅(pt)
 
 function translate(a: Annotation, dx: number, dy: number): Annotation {
   switch (a.type) {
@@ -68,10 +78,18 @@ export function PageView({ info }: Props) {
   const [draft, setDraftState] = useState<Annotation | null>(null);
   const [editor, setEditorState] = useState<EditorState | null>(null);
   const editorRef = useRef<EditorState | null>(null);
+  // テキストボックスをドラッグで作成中のプレビュー枠
+  const [textDrag, setTextDrag] = useState<BoxDraft | null>(null);
+  const textDragRef = useRef<BoxDraft | null>(null);
 
   function setDraft(next: Annotation | null) {
     draftRef.current = next;
     setDraftState(next);
+  }
+
+  function setTextBox(next: BoxDraft | null) {
+    textDragRef.current = next;
+    setTextDrag(next);
   }
 
   function setEditor(next: EditorState | null) {
@@ -155,8 +173,10 @@ export function PageView({ info }: Props) {
           type: 'text',
           x: ed.x,
           y: ed.y,
+          w: ed.w,
           text: value,
           fontSize: ed.fontSize,
+          fontFamily: ed.fontFamily,
           color: ed.color,
           opacity: 1,
         });
@@ -175,7 +195,11 @@ export function PageView({ info }: Props) {
     const handle = targetEl.getAttribute('data-handle') as ResizeHandle | null;
     const hitId = targetEl.closest('[data-aid]')?.getAttribute('data-aid') ?? null;
 
-    if (editor) commitEditor();
+    if (editor) {
+      commitEditor();
+      // テキスト編集を閉じるためのクリックでは、続けて新規ボックスを作らない
+      if (tool === 'text') return;
+    }
 
     if (tool === 'select') {
       if (handle && selectedId) {
@@ -202,14 +226,10 @@ export function PageView({ info }: Props) {
     }
 
     if (tool === 'text') {
-      setEditor({
-        mode: 'new',
-        x: pt.x,
-        y: pt.y,
-        fontSize: settings.fontSize,
-        color: settings.color,
-        value: '',
-      });
+      // PowerPoint風：ドラッグでテキストボックスの範囲を決める
+      interactionRef.current = { kind: 'textbox', id: uid('t'), start: pt };
+      setTextBox({ x: pt.x, y: pt.y, w: 0, h: 0 });
+      capturePointer(e.pointerId);
       return;
     }
 
@@ -268,6 +288,16 @@ export function PageView({ info }: Props) {
     if (!it) return;
     const pt = getPoint(e);
 
+    if (it.kind === 'textbox') {
+      setTextBox({
+        x: Math.min(it.start.x, pt.x),
+        y: Math.min(it.start.y, pt.y),
+        w: Math.abs(pt.x - it.start.x),
+        h: Math.abs(pt.y - it.start.y),
+      });
+      return;
+    }
+
     if (it.kind === 'create') {
       const d = draftRef.current;
       if (!d) return;
@@ -296,6 +326,27 @@ export function PageView({ info }: Props) {
   function onPointerUp() {
     const it = interactionRef.current;
     interactionRef.current = null;
+
+    if (it && it.kind === 'textbox') {
+      const box = textDragRef.current;
+      setTextBox(null);
+      if (!box) return;
+      // ドラッグが小さければクリック扱い。既定幅のボックスをページ内に収める
+      const w =
+        box.w > 12 ? box.w : Math.min(DEFAULT_TEXTBOX_W, Math.max(80, W - box.x - 8));
+      setEditor({
+        mode: 'new',
+        x: box.x,
+        y: box.y,
+        w,
+        fontSize: settings.fontSize,
+        fontFamily: settings.fontFamily,
+        color: settings.color,
+        value: '',
+      });
+      return;
+    }
+
     const d = draftRef.current;
     setDraft(null);
     if (!it || !d) return;
@@ -323,7 +374,17 @@ export function PageView({ info }: Props) {
     if (!hitId) return;
     const a = annotations.find((x) => x.id === hitId);
     if (a && a.type === 'text') {
-      setEditor({ mode: 'edit', id: a.id, x: a.x, y: a.y, fontSize: a.fontSize, color: a.color, value: a.text });
+      setEditor({
+        mode: 'edit',
+        id: a.id,
+        x: a.x,
+        y: a.y,
+        w: a.w,
+        fontSize: a.fontSize,
+        fontFamily: a.fontFamily,
+        color: a.color,
+        value: a.text,
+      });
       select(a.id);
     }
   }
@@ -375,6 +436,21 @@ export function PageView({ info }: Props) {
           </g>
         )}
 
+        {/* テキストボックス作成中のプレビュー枠 */}
+        {textDrag && (
+          <rect
+            x={textDrag.x}
+            y={textDrag.y}
+            width={Math.max(textDrag.w, 1)}
+            height={Math.max(textDrag.h, 1)}
+            fill="rgba(91,140,255,0.08)"
+            stroke="#5b8cff"
+            strokeWidth={1.2 / scale}
+            strokeDasharray={`${4 / scale} ${3 / scale}`}
+            style={{ pointerEvents: 'none' }}
+          />
+        )}
+
         {/* 選択用ヒット領域（選択ツール時のみ・全バウンディングボックスをクリック可能に） */}
         {tool === 'select' &&
           renderList.map((a) => {
@@ -423,17 +499,20 @@ export function PageView({ info }: Props) {
           style={{
             left: editor.x * scale,
             top: editor.y * scale,
+            width: editor.w * scale,
             fontSize: editor.fontSize * scale,
+            fontFamily: editor.fontFamily,
             color: editor.color,
             caretColor: editor.color,
-            minWidth: Math.max(editor.fontSize * scale * 5, 96),
-            minHeight: editor.fontSize * scale * 1.32,
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word',
+            minHeight: editor.fontSize * scale * 1.35,
           }}
           ref={(el) => {
             if (el) {
-              el.style.width = '0px';
+              // 幅は固定（ボックス幅）。高さだけ内容に合わせて伸ばす
               el.style.height = '0px';
-              el.style.width = `${el.scrollWidth + 2}px`;
               el.style.height = `${el.scrollHeight}px`;
             }
           }}
@@ -448,6 +527,17 @@ function resizeAnnotation(a: Annotation, handle: ResizeHandle, pt: Point): Annot
     if (handle === 'p1') return { ...a, x1: pt.x, y1: pt.y };
     if (handle === 'p2') return { ...a, x2: pt.x, y2: pt.y };
     return a;
+  }
+  if (a.type === 'text') {
+    // テキストは幅だけ変更（高さは内容に追従）。左右ハンドルで折り返し幅を調整
+    const x1 = a.x + a.w;
+    let nx0 = a.x;
+    let nx1 = x1;
+    if (handle === 'nw' || handle === 'sw') nx0 = pt.x;
+    else if (handle === 'ne' || handle === 'se') nx1 = pt.x;
+    const x = Math.min(nx0, nx1);
+    const w = Math.max(MIN_SIZE * 2, Math.abs(nx1 - nx0));
+    return { ...a, x, w };
   }
   if (a.type === 'rect' || a.type === 'ellipse' || a.type === 'image') {
     // 正規化された現在のボックス
@@ -506,7 +596,8 @@ function SelectionOverlay({ annotation, scale }: { annotation: Annotation; scale
   } else if (
     annotation.type === 'rect' ||
     annotation.type === 'ellipse' ||
-    annotation.type === 'image'
+    annotation.type === 'image' ||
+    annotation.type === 'text'
   ) {
     const b = bboxOf(annotation);
     handles.push({ key: 'nw', x: b.x, y: b.y });

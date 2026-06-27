@@ -37,6 +37,7 @@ body {
 /* テキスト編集中のテキストエリア */
 .text-editor {
   position: absolute;
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
   border: 1.5px dashed #5b8cff;
@@ -46,10 +47,9 @@ body {
   box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.18);
   resize: none;
   overflow: hidden;
-  white-space: pre;
-  line-height: 1.32;
-  font-family: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
-    'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  line-height: 1.35;
 }
 .text-editor::placeholder {
   color: rgba(91, 140, 255, 0.65);
