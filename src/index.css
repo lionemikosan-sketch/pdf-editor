@@ -39,15 +39,20 @@ body {
   position: absolute;
   margin: 0;
   padding: 0;
-  border: 1px dashed #5b8cff;
+  border: 1.5px dashed #5b8cff;
+  border-radius: 2px;
   outline: none;
-  background: rgba(91, 140, 255, 0.06);
+  background: rgba(91, 140, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.18);
   resize: none;
   overflow: hidden;
   white-space: pre;
   line-height: 1.32;
   font-family: system-ui, -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
     'Noto Sans JP', 'Yu Gothic', Meiryo, sans-serif;
+}
+.text-editor::placeholder {
+  color: rgba(91, 140, 255, 0.65);
 }
 
 @keyframes spin {

@@ -66,11 +66,17 @@ export function PageView({ info }: Props) {
   const draftRef = useRef<Annotation | null>(null);
 
   const [draft, setDraftState] = useState<Annotation | null>(null);
-  const [editor, setEditor] = useState<EditorState | null>(null);
+  const [editor, setEditorState] = useState<EditorState | null>(null);
+  const editorRef = useRef<EditorState | null>(null);
 
   function setDraft(next: Annotation | null) {
     draftRef.current = next;
     setDraftState(next);
+  }
+
+  function setEditor(next: EditorState | null) {
+    editorRef.current = next;
+    setEditorState(next);
   }
 
   const W = info.width;
@@ -136,29 +142,29 @@ export function PageView({ info }: Props) {
   }
 
   function commitEditor() {
-    setEditor((ed) => {
-      if (!ed) return null;
-      const value = ed.value.replace(/\s+$/, '');
-      if (ed.mode === 'new') {
-        if (value.trim().length > 0) {
-          addAnnotation({
-            id: uid('t'),
-            page: pageIndex,
-            type: 'text',
-            x: ed.x,
-            y: ed.y,
-            text: value,
-            fontSize: ed.fontSize,
-            color: ed.color,
-            opacity: 1,
-          });
-        }
-      } else if (ed.id) {
-        if (value.trim().length === 0) deleteAnnotation(ed.id);
-        else updateAnnotation(ed.id, { text: value } as Partial<Annotation>);
+    const ed = editorRef.current;
+    if (!ed) return;
+    // 先に編集状態を閉じる（アンマウント時の blur 等による二重確定を防ぐ）
+    setEditor(null);
+    const value = ed.value.replace(/\s+$/, '');
+    if (ed.mode === 'new') {
+      if (value.trim().length > 0) {
+        addAnnotation({
+          id: uid('t'),
+          page: pageIndex,
+          type: 'text',
+          x: ed.x,
+          y: ed.y,
+          text: value,
+          fontSize: ed.fontSize,
+          color: ed.color,
+          opacity: 1,
+        });
       }
-      return null;
-    });
+    } else if (ed.id) {
+      if (value.trim().length === 0) deleteAnnotation(ed.id);
+      else updateAnnotation(ed.id, { text: value } as Partial<Annotation>);
+    }
   }
 
   // ---- ポインタ操作 ----
@@ -399,9 +405,13 @@ export function PageView({ info }: Props) {
         <textarea
           className="text-editor"
           autoFocus
+          placeholder="テキストを入力"
           value={editor.value}
           spellCheck={false}
-          onChange={(e) => setEditor((ed) => (ed ? { ...ed, value: e.target.value } : ed))}
+          onChange={(e) => {
+            const cur = editorRef.current;
+            if (cur) setEditor({ ...cur, value: e.target.value });
+          }}
           onBlur={commitEditor}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
@@ -415,9 +425,9 @@ export function PageView({ info }: Props) {
             top: editor.y * scale,
             fontSize: editor.fontSize * scale,
             color: editor.color,
-            width: 'auto',
-            minWidth: editor.fontSize * scale,
-            height: 'auto',
+            caretColor: editor.color,
+            minWidth: Math.max(editor.fontSize * scale * 5, 96),
+            minHeight: editor.fontSize * scale * 1.32,
           }}
           ref={(el) => {
             if (el) {

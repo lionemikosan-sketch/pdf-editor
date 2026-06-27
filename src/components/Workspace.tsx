@@ -2,9 +2,20 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useStore } from '@/store/useStore';
 import { PageView } from './PageView';
 
+const TOOL_HINTS: Record<string, string> = {
+  text: 'PDF上をクリックすると、その位置にテキストを入力できます',
+  pen: 'ドラッグして手書きで描けます',
+  highlight: 'ドラッグした部分を蛍光ペンでマークします',
+  line: 'ドラッグして直線を引きます',
+  arrow: 'ドラッグして矢印を引きます',
+  rect: 'ドラッグして四角形を描きます',
+  ellipse: 'ドラッグして楕円を描きます',
+};
+
 export function Workspace() {
   const pages = useStore((s) => s.pages);
   const fileName = useStore((s) => s.fileName);
+  const tool = useStore((s) => s.tool);
   const setScale = useStore((s) => s.setScale);
   const setCurrentPage = useStore((s) => s.setCurrentPage);
   const currentPage = useStore((s) => s.currentPage);
@@ -50,8 +61,16 @@ export function Workspace() {
     return () => observer.disconnect();
   }, [pages, setCurrentPage]);
 
+  const hint = TOOL_HINTS[tool];
+
   return (
     <div className="relative flex-1 overflow-hidden">
+      {/* ツール操作のヒント */}
+      {hint && (
+        <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-full border border-accent/40 bg-accent/15 px-4 py-1.5 text-xs font-medium text-accent-soft shadow-panel backdrop-blur">
+          {hint}
+        </div>
+      )}
       <div
         ref={scrollRef}
         className="scroll-area h-full overflow-auto bg-ink-950 px-6 py-6"
